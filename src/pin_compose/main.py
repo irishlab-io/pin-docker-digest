@@ -1,14 +1,13 @@
 import argparse
-import re
 import sys
 import subprocess
 import json
 import yaml
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional, Any
+from typing import Any
 
 
-def get_image_digest(image_name: str) -> Optional[str]:
+def get_image_digest(image_name: str) -> str | None:
     """
     Get the digest for a Docker image using docker manifest inspect.
 
@@ -24,13 +23,17 @@ def get_image_digest(image_name: str) -> Optional[str]:
             ["docker", "manifest", "inspect", image_name],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
 
         manifest = json.loads(result.stdout)
 
         # For multi-platform manifests
-        if "mediaType" in manifest and manifest["mediaType"] == "application/vnd.docker.distribution.manifest.list.v2+json":
+        if (
+            "mediaType" in manifest
+            and manifest["mediaType"]
+            == "application/vnd.docker.distribution.manifest.list.v2+json"
+        ):
             # Get the first manifest (or you could filter by platform)
             if "manifests" in manifest and len(manifest["manifests"]) > 0:
                 digest = manifest["manifests"][0]["digest"]
@@ -45,11 +48,11 @@ def get_image_digest(image_name: str) -> Optional[str]:
             ["docker", "manifest", "inspect", "--verbose", image_name],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
 
         # Look for the digest in the verbose output
-        lines = result.stderr.split('\n')
+        lines = result.stderr.split("\n")
         for line in lines:
             if "Docker-Content-Digest:" in line:
                 digest = line.split("Docker-Content-Digest:")[1].strip()
@@ -68,7 +71,9 @@ def get_image_digest(image_name: str) -> Optional[str]:
     return None
 
 
-def extract_images_from_compose(compose_data: Dict[str, Any]) -> List[Tuple[str, List[str]]]:
+def extract_images_from_compose(
+    compose_data: dict[str, Any],
+) -> list[tuple[str, list[str]]]:
     """
     Extract all Docker images from a docker-compose data structure.
 
@@ -80,13 +85,13 @@ def extract_images_from_compose(compose_data: Dict[str, Any]) -> List[Tuple[str,
     """
     images = []
 
-    def find_images_recursive(data: Any, path: List[str] = []):
+    def find_images_recursive(data: Any, path: list[str] = []):
         if isinstance(data, dict):
             for key, value in data.items():
                 current_path = path + [key]
                 if key == "image" and isinstance(value, str):
                     # Check if image is not already pinned with digest
-                    if '@sha256:' not in value:
+                    if "@sha256:" not in value:
                         images.append((value, current_path))
                 else:
                     find_images_recursive(value, current_path)
@@ -98,7 +103,9 @@ def extract_images_from_compose(compose_data: Dict[str, Any]) -> List[Tuple[str,
     return images
 
 
-def update_image_in_compose_data(compose_data: Dict[str, Any], path: List[str], new_image: str) -> Dict[str, Any]:
+def update_image_in_compose_data(
+    compose_data: dict[str, Any], path: list[str], new_image: str
+) -> dict[str, Any]:
     """
     Update an image reference in the compose data structure.
 
@@ -136,7 +143,7 @@ def pin_compose_images(compose_path: Path, dry_run: bool = False) -> bool:
     print(f"Processing {compose_path}")
 
     try:
-        with open(compose_path, 'r') as f:
+        with open(compose_path) as f:
             compose_data = yaml.safe_load(f)
     except yaml.YAMLError as e:
         print(f"Error parsing YAML in {compose_path}: {e}", file=sys.stderr)
@@ -167,8 +174,8 @@ def pin_compose_images(compose_path: Path, dry_run: bool = False) -> bool:
 
         if digest:
             # Remove tag and add digest
-            if ':' in image_name:
-                image_base = image_name.split(':')[0]
+            if ":" in image_name:
+                image_base = image_name.split(":")[0]
             else:
                 image_base = image_name
 
@@ -181,7 +188,9 @@ def pin_compose_images(compose_path: Path, dry_run: bool = False) -> bool:
                 print(f"    ->           with: {pinned_image}")
             else:
                 # Update in the data structure
-                modified_data = update_image_in_compose_data(modified_data, path, pinned_image)
+                modified_data = update_image_in_compose_data(
+                    modified_data, path, pinned_image
+                )
                 changes_made = True
         else:
             print(f"    -> Warning: Could not get digest for {image_name}")
@@ -189,19 +198,19 @@ def pin_compose_images(compose_path: Path, dry_run: bool = False) -> bool:
     # Write back the modified content
     if changes_made and not dry_run:
         try:
-            with open(compose_path, 'w') as f:
+            with open(compose_path, "w") as f:
                 yaml.dump(modified_data, f, default_flow_style=False, sort_keys=False)
             print(f"  ✓ Updated {compose_path}")
         except Exception as e:
             print(f"Error writing {compose_path}: {e}", file=sys.stderr)
             return False
     elif dry_run:
-        print(f"  (dry run - no changes made)")
+        print("  (dry run - no changes made)")
 
     return True
 
 
-def find_compose_files(directory: Path) -> List[Path]:
+def find_compose_files(directory: Path) -> list[Path]:
     """
     Find all docker-compose files in a directory recursively.
 
@@ -215,12 +224,12 @@ def find_compose_files(directory: Path) -> List[Path]:
 
     # Common docker-compose file patterns
     patterns = [
-        'docker-compose.yml',
-        'docker-compose.yaml',
-        'compose.yml',
-        'compose.yaml',
-        'docker-compose.*.yml',
-        'docker-compose.*.yaml'
+        "docker-compose.yml",
+        "docker-compose.yaml",
+        "compose.yml",
+        "compose.yaml",
+        "docker-compose.*.yml",
+        "docker-compose.*.yaml",
     ]
 
     for pattern in patterns:
@@ -240,32 +249,30 @@ Examples:
   pin-compose --path ./docker           # Pin images in all compose files under ./docker
   pin-compose --dry-run                 # Show what would be changed without modifying files
   pin-compose compose.yml               # Pin images in specific compose file
-        """
+        """,
     )
 
     parser.add_argument(
         "files",
         nargs="*",
-        help="Specific docker-compose file(s) to process. If not provided, searches for compose files in current directory"
+        help="Specific docker-compose file(s) to process. If not provided, searches for compose files in current directory",
     )
 
     parser.add_argument(
         "--path",
         type=Path,
         default=Path.cwd(),
-        help="Directory to search for docker-compose files (default: current directory)"
+        help="Directory to search for docker-compose files (default: current directory)",
     )
 
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be changed without modifying files"
+        help="Show what would be changed without modifying files",
     )
 
     parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Enable verbose output"
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
 
     args = parser.parse_args()

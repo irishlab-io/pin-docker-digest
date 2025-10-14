@@ -8,7 +8,7 @@ from src.pin_dockerfile.main import (
     parse_dockerfile_images,
     get_image_digest,
     pin_dockerfile_images,
-    find_dockerfiles
+    find_dockerfiles,
 )
 
 
@@ -22,7 +22,9 @@ FROM node:16-alpine
 COPY . .
         """.strip()
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='Dockerfile', delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix="Dockerfile", delete=False
+        ) as f:
             f.write(content)
             f.flush()
 
@@ -43,7 +45,9 @@ FROM node:16-alpine@sha256:abcd1234
 FROM redis:6.2
         """.strip()
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='Dockerfile', delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix="Dockerfile", delete=False
+        ) as f:
             f.write(content)
             f.flush()
 
@@ -65,7 +69,9 @@ From node:16-alpine
 FROM redis:6.2
         """.strip()
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='Dockerfile', delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix="Dockerfile", delete=False
+        ) as f:
             f.write(content)
             f.flush()
 
@@ -81,47 +87,32 @@ FROM redis:6.2
 
 
 class TestGetImageDigest:
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_get_image_digest_success(self, mock_run):
         """Test successful digest retrieval."""
-        mock_manifest = {
-            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
-            "config": {
-                "digest": "sha256:1234567890abcdef"
-            }
-        }
-
         mock_run.return_value = MagicMock(
             stdout='{"mediaType": "application/vnd.docker.distribution.manifest.v2+json", "config": {"digest": "sha256:1234567890abcdef"}}',
-            returncode=0
+            returncode=0,
         )
 
         digest = get_image_digest("python:3.9-slim-buster")
         assert digest == "sha256:1234567890abcdef"
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_get_image_digest_multi_platform(self, mock_run):
         """Test digest retrieval for multi-platform manifest."""
-        mock_manifest = {
-            "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
-            "manifests": [
-                {"digest": "sha256:abcdef1234567890"},
-                {"digest": "sha256:1234567890abcdef"}
-            ]
-        }
-
         mock_run.return_value = MagicMock(
             stdout='{"mediaType": "application/vnd.docker.distribution.manifest.list.v2+json", "manifests": [{"digest": "sha256:abcdef1234567890"}, {"digest": "sha256:1234567890abcdef"}]}',
-            returncode=0
+            returncode=0,
         )
 
         digest = get_image_digest("python:3.9-slim-buster")
         assert digest == "sha256:abcdef1234567890"
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_get_image_digest_failure(self, mock_run):
         """Test digest retrieval failure."""
-        mock_run.side_effect = subprocess.CalledProcessError(1, 'docker')
+        mock_run.side_effect = subprocess.CalledProcessError(1, "docker")
 
         digest = get_image_digest("nonexistent:image")
         assert digest is None
@@ -150,7 +141,7 @@ class TestFindDockerfiles:
 
 
 class TestPinDockerfileImages:
-    @patch('src.pin_dockerfile.main.get_image_digest')
+    @patch("src.pin_dockerfile.main.get_image_digest")
     def test_pin_dockerfile_images_dry_run(self, mock_get_digest):
         """Test pinning images in dry run mode."""
         mock_get_digest.return_value = "sha256:1234567890abcdef"
@@ -161,7 +152,9 @@ WORKDIR /app
 COPY . .
         """.strip()
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='Dockerfile', delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix="Dockerfile", delete=False
+        ) as f:
             f.write(content)
             f.flush()
 
@@ -169,7 +162,7 @@ COPY . .
             result = pin_dockerfile_images(Path(f.name), dry_run=True)
 
             # Read the file to ensure it wasn't modified
-            with open(f.name, 'r') as read_f:
+            with open(f.name) as read_f:
                 file_content = read_f.read()
 
         assert result is True
@@ -179,7 +172,7 @@ COPY . .
         # Clean up
         Path(f.name).unlink()
 
-    @patch('src.pin_dockerfile.main.get_image_digest')
+    @patch("src.pin_dockerfile.main.get_image_digest")
     def test_pin_dockerfile_images_actual_run(self, mock_get_digest):
         """Test actually pinning images."""
         mock_get_digest.return_value = "sha256:1234567890abcdef"
@@ -188,14 +181,16 @@ COPY . .
 WORKDIR /app
 COPY . ."""
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='Dockerfile', delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix="Dockerfile", delete=False
+        ) as f:
             f.write(content)
             f.flush()
 
             result = pin_dockerfile_images(Path(f.name), dry_run=False)
 
             # Read the modified file
-            with open(f.name, 'r') as read_f:
+            with open(f.name) as read_f:
                 modified_content = read_f.read()
 
         assert result is True

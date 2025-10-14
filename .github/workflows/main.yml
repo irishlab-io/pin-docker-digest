@@ -15,18 +15,19 @@ concurrency:
 jobs:
 
   pre-commit:
-    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
-    name: Placeholder - Pre-Commit Checks
+    name: Pre-Commit Checks
     runs-on: ubuntu-24.04
     timeout-minutes: 5
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Run Pre-Commit Checks
-        run: echo Pre-Commit Checks
-        shell: bash
+      - name: Run Pre-Commit (prek) Checks
+        uses: j178/prek-action@91fd7d7cf70ae1dee9f4f44e7dfa5d1073fe6623 # v1.0.11
+
+        env:
+          SKIP: "pytest"
 
   secret:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
@@ -44,44 +45,10 @@ jobs:
         run: echo Secret Scanning
         shell: bash
 
-  sast:
-    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
-    needs:
-      - pre-commit
-    name: Placeholder - SAST
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5.0.0
-
-      - name: Run SAST
-        run: echo Static Application Security Testing
-        shell: bash
-
-  sca:
-    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
-    needs:
-      - pre-commit
-    name: Placeholder - SCA
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5.0.0
-
-      - name: Run SCA
-        run: echo Software Composition Analysis
-        shell: bash
-
   unit-test:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:
       - secret
-      - sca
-      - sast
     name: Call Python | UV & Unit Tests
     uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@main
 

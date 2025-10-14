@@ -105,18 +105,3 @@ jobs:
       ruff_version: "0.12.10"
       uv_version: "0.9.0"
       working_directory: .
-
-  docker-build-push:
-    needs:
-      - unit-test
-    name: Call Docker Build
-    uses: irishlab-io/.github/.github/workflows/reusable-docker-build.yml@main
-
-    permissions:
-      contents: read
-      packages: write
-      pull-requests: write
-
-    with:
-      platforms: |
-          linux/amd64

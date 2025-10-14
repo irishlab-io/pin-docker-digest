@@ -1,0 +1,57 @@
+---
+name: CI - Tag
+
+on: # yamllint disable-line rule:truthy
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: ${{ github.ref }}-tag-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    outputs:
+      notes: ${{ steps.generate_notes.outputs.notes }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v6.0.0
+        with:
+          python-version: 3.14
+
+      - name: Get Version
+        id: tag_name
+        run: |
+          echo "current_version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Get CHANGELOG
+        id: generate_notes
+        uses: anmarkoulis/commitizen-changelog-reader@v1.2.0
+        with:
+          tag_name: ${{ github.ref }}
+          changelog: CHANGELOG.md
+
+      - name: Update CHANGELOG
+        run: |
+          echo "${{join(fromJson(steps.generate_notes.outputs.notes).notes, '')}}" > ${{ github.workspace }}-GH_CHANGELOG.md
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2.3.3
+        if: github.ref_type == 'tag'
+        with:
+          body_path: ${{ github.workspace }}-GH_CHANGELOG.md
+          repository: ${{ github.repository }}
+          token: ${{ secrets.RELEASE_PAT }}

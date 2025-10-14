@@ -1,0 +1,122 @@
+---
+name: CI - PR
+
+on: # yamllint disable-line rule:truthy
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}-pr-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+
+  pre-commit:
+    name: Placeholder - Pre-Commit Checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5.0.0
+
+      - name: Checkout
+        uses: actions/checkout@v5.0.0
+
+      - name: Run Pre-Commit Checks
+        run: echo Pre-Commit Checks
+        shell: bash
+
+  secret:
+    needs:
+      - pre-commit
+    name: Placeholder - Secret Scanning
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5.0.0
+
+      - name: TruffleHog OSS
+        id: trufflehog
+        uses: trufflesecurity/trufflehog@main
+        continue-on-error: true
+        with:
+          path: ./
+          base: "${{ github.event.repository.default_branch }}"
+          head: HEAD
+          extra_args: --debug
+
+      - name: Scan Results Status
+        if: steps.trufflehog.outcome == 'failure'
+        run: |
+          echo "Secret Scanning failed."
+          echo "Did you leak a secret accidentally?"
+          exit 1
+        shell: bash
+
+  sast:
+    needs:
+      - pre-commit
+    name: Placeholder - SAST
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5.0.0
+
+      - name: Run SAST
+        run: echo Static Application Security Testing
+        shell: bash
+
+  sca:
+    needs:
+      - pre-commit
+    name: Placeholder - SCA
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5.0.0
+
+      - name: Run SCA
+        run: echo Software Composition Analysis
+        shell: bash
+
+  unit-test:
+    needs:
+      - secret
+      - sca
+      - sast
+    name: Call Python | UV & Unit Tests
+    uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@main
+
+    with:
+      pytest-enable: true
+      python_version: "3.14"
+      ruff-enable: false
+      ruff_version: "0.12.10"
+      uv_version: "0.9.0"
+      working_directory: .
+
+  docker-build-push:
+    needs:
+      - unit-test
+    name: Call Docker Build
+    uses: irishlab-io/.github/.github/workflows/reusable-docker-build.yml@main
+
+    permissions:
+      contents: read
+      packages: write
+      pull-requests: write
+
+    with:
+      platforms: |
+          linux/amd64

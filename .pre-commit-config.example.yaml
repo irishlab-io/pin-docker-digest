@@ -1,13 +1,81 @@
 ---
+# pre-commit install --allow-missing-config
+# pre-commit autoupdate
+# pre-commit run --all-files --color auto
+exclude: |
+  (?x)^(
+    \.pre-commit-config\.yaml$
+  )
+fail_fast: true
+default_stages:
+  - pre-commit
+default_install_hook_types:
+  - commit-msg
+  - pre-commit
 repos:
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.9.1
+    hooks:
+      - id: commitizen
+        name: "commitizen | validate commit messages"
+        stages:
+          - commit-msg
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        name: "git | block large files"
+        args: [--maxkb=2048]
+      - id: check-toml
+        name: "general | check TOML files"
+      - id: check-yaml
+        name: "general | check YAML files"
+      - id: end-of-file-fixer
+        name: "general | fix end of file"
+      - id: mixed-line-ending
+        name: "general | fix line ending"
+        args:
+          - --fix=auto
+      - id: trailing-whitespace
+        name: "general | remove trailing whitespace"
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        name: "md | lint: run markdownlint-cli"
+        args:
+          - --config
+          - .config/.markdown-lint.yml
+        exclude: CHANGELOG.md
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+        name: "yaml | lint: run yamllint"
+        args:
+          - -c
+          - .config/.yaml-lint.yml
   - repo: local
     hooks:
-      - id: pin-dockerfile
-        name: Pin Dockerfile images to digest
-        entry: python -m apps.pin_dockerfile.cli
-        language: python
-        files: 'Dockerfile.*'
-        additional_dependencies: []
-        require_serial: true
-        pass_filenames: true
-        args: []
+      - id: pytest
+        name: "pytest | run unit tests"
+        entry: pytest -vv --color=yes --tb=no
+        language: system
+        types:
+          - python
+        pass_filenames: false
+        always_run: true
+  - repo: local
+    hooks:
+      - id: pin-github-action
+        name: "security | gh-action: pinned sha"
+        verbose: true
+        files: ^\.github/workflows/[^/]+\.ya?ml$
+        entry: "pin-github-action ."
+        args:
+          - --allow
+          - "irishlab-io/*"
+        language: node
+        additional_dependencies:
+          - pin-github-action@3.4.0
+

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pin-docker-digest"
-version = "0.1.0"
+version = "0.1.1"
 description = "Pre-Commit hook to pin image digest to SHA in Dockerfile|Compose "
 readme = "README.md"
 license = "MIT"
@@ -39,7 +39,7 @@ dev = [
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.1.0"
+version = "0.1.1"
 tag_format = "v$version"
 version_files = [
     "pyproject.toml:version",

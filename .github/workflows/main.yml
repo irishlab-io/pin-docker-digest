@@ -27,7 +27,7 @@ jobs:
         uses: j178/prek-action@91fd7d7cf70ae1dee9f4f44e7dfa5d1073fe6623 # v1.0.11
 
         env:
-          SKIP: "pytest"
+          SKIP: "pytest,pin-github-action"
 
   secret:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Run Secret Scanning
         run: echo Secret Scanning
@@ -50,7 +50,7 @@ jobs:
     needs:
       - secret
     name: Call Python | UV & Unit Tests
-    uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@main
+    uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@cc61910f6ccf9d0f58c5c1006f42d64986eeba82 # main
 
     with:
       pytest-enable: true
@@ -76,18 +76,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           token: ${{ secrets.RELEASE_PAT }}
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v6.0.0
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: 3.14
 
       - name: Create bump and changelog
-        uses: commitizen-tools/commitizen-action@0.24.0
+        uses: commitizen-tools/commitizen-action@5b0848cd060263e24602d1eba03710e056ef7711 # 0.24.0
         with:
           github_token: ${{ secrets.RELEASE_PAT }}
           branch: main

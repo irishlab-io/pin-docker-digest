@@ -28,7 +28,7 @@ jobs:
         uses: j178/prek-action@91fd7d7cf70ae1dee9f4f44e7dfa5d1073fe6623 # v1.0.11
 
         env:
-          SKIP: "pytest"
+          SKIP: "pytest,pin-github-action"
 
   secret:
     needs:
@@ -39,11 +39,11 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: TruffleHog OSS
         id: trufflehog
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@466da5b0bb161144f6afca9afe5d57975828c410 # v3.90.8
         continue-on-error: true
         with:
           path: ./
@@ -63,7 +63,7 @@ jobs:
     needs:
       - secret
     name: Call Python | UV & Unit Tests
-    uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@main
+    uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@cc61910f6ccf9d0f58c5c1006f42d64986eeba82 # main
 
     with:
       pytest-enable: true

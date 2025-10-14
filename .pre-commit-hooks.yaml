@@ -1,0 +1,19 @@
+---
+- id: pin-dockerfile
+  name: Pin Dockerfile
+  description: This hook ensures that the Dockerfile is pinned to specific versions.
+  entry: pin_dockerfile
+  language: python
+  types:
+    - python
+  files: 'Dockerfile.*'
+- id: pin-compose
+  name: Pin Compose
+  description: This hook ensures that the Docker Compose file is pinned to specific versions.
+  entry: pin_compose
+  language: python
+  types:
+    - python
+  files: 'docker-compose.*\.ya?ml$|compose.*\.ya?ml$'
+  additional_dependencies:
+    - PyYAML>=6.0.0

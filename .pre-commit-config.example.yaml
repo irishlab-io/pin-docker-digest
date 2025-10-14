@@ -1,0 +1,13 @@
+---
+repos:
+  - repo: local
+    hooks:
+      - id: pin-dockerfile
+        name: Pin Dockerfile images to digest
+        entry: python -m apps.pin_dockerfile.cli
+        language: python
+        files: 'Dockerfile.*'
+        additional_dependencies: []
+        require_serial: true
+        pass_filenames: true
+        args: []

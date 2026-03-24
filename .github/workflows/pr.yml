@@ -32,7 +32,7 @@ jobs:
 
   code_build:
     needs:
-      - secret
+      - pre-commit
     name: Call Python | UV & Unit Tests
     uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@main
 

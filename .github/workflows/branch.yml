@@ -127,5 +127,6 @@ jobs:
         uses: irishlab-io/pin-docker-digest/.github/actions/grype@main
         with:
           image: ghcr.io/${{ github.repository }}:${{ needs.docker_build.outputs.image-tag }}
-          fail: false # Set to false to not fail the build, but we will handle it in the gating step
+          fail: true
           severity: medium
+        continue-on-error: true

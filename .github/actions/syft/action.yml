@@ -1,0 +1,32 @@
+---
+name: Generate SBOM with Syft
+description: Composite action for generating Software Bill of Materials (SBOM)
+author: irishlab-io
+
+inputs:
+  image:
+    description: Container image to scan
+    required: true
+  fail:
+    description: Whether to fail the build on vulnerabilities
+    required: true
+  severity:
+    description: Severity level for vulnerabilities ("negligible", "low", "medium", "high" and "critical")
+    required: false
+    default: "medium"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run SCA Scan
+      run: |
+        echo Run SCA
+        echo "::warning::Must implement a dependencies scanning mechanism."
+      shell: bash
+
+    - name: Scan image
+      uses: anchore/scan-action@v7
+      with:
+        image: ${{ inputs.image }}
+        fail-build: ${{ inputs.fail-build }}
+        severity-cutoff: ${{ inputs.severity }}

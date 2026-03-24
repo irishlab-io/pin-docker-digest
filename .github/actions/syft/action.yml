@@ -8,6 +8,9 @@ inputs:
     description: Name of the SBOM artifact
     required: false
     default: "${{ github.run_id }}-sbom.json"
+  dependency-track-enable:
+    description: Dependency-Track is enabled for uploading the generated SBOM
+    required: false
   dependency-track-api-key:
     description: Dependency-Track API key
     required: false
@@ -51,12 +54,13 @@ runs:
         artifact-name: ${{ inputs.artifact }}
         output-file: ${{ inputs.output }}
 
-    # - name: Upload SBOM to Dependency-Track
-    #   uses: DependencyTrack/gh-upload-sbom@48feab3080ff9e8f51f4d21861d9fc914eb744f5 # v3.1.0
-    #   with:
-    #     serverhostname: ${{ inputs.dependency-track-host-url }}
-    #     apikey: ${{ inputs.dependency-track-api-key }}
-    #     projectname: ${{ inputs.project-name }}
-    #     projectversion: ${{ inputs.project-version }}
-    #     bomfilename: ${{ inputs.output }}
-    #     autocreate: true
+    - name: Upload SBOM to Dependency-Track
+      if: ${{ inputs.dependency-track-enable == 'true' }}
+      uses: DependencyTrack/gh-upload-sbom@48feab3080ff9e8f51f4d21861d9fc914eb744f5 # v3.1.0
+      with:
+        serverhostname: ${{ inputs.dependency-track-host-url }}
+        apikey: ${{ inputs.dependency-track-api-key }}
+        projectname: ${{ inputs.project-name }}
+        projectversion: ${{ inputs.project-version }}
+        bomfilename: ${{ inputs.output }}
+        autocreate: true

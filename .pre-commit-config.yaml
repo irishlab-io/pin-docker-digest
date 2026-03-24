@@ -89,6 +89,13 @@ repos:
           - pin-github-action@3.4.0
         stages:
           - manual
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.23.1
+    hooks:
+      - id: zizmor
+        name: "security | gh-action: zizmor scan"
+        stages:
+          - manual
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.11
     hooks:

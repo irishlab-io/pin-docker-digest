@@ -4,16 +4,35 @@ description: Composite action for generating Software Bill of Materials (SBOM)
 author: irishlab-io
 
 inputs:
+  artifact:
+    description: Name of the SBOM artifact
+    required: false
+    default: "${{ github.run_id }}-sbom.json"
+  dependency-track-api-key:
+    description: Dependency-Track API key
+    required: false
+  dependency-track-host-url:
+    description: Dependency-Track host URL
+    required: false
+  format:
+    description: Format of the SBOM ("cyclonedx-json", "spdx-json", etc.)
+    required: true
+    default: "cyclonedx-json"
+  project-name:
+    description: Name of the project for Dependency-Track
+    required: true
+  project-version:
+    description: Version of the project for Dependency-Track
+    required: false
+    default: "latest"
+  output:
+    description: Name of the SBOM output file
+    required: false
+    default: "${{ github.workspace }}/${{ github.run_id }}-sbom.json"
   image:
     description: Container image to scan
     required: true
-  fail:
-    description: Whether to fail the build on vulnerabilities
-    required: true
-  severity:
-    description: Severity level for vulnerabilities ("negligible", "low", "medium", "high" and "critical")
-    required: false
-    default: "medium"
+
 
 runs:
   using: "composite"
@@ -30,3 +49,21 @@ runs:
         image: ${{ inputs.image }}
         fail-build: ${{ inputs.fail-build }}
         severity-cutoff: ${{ inputs.severity }}
+
+    - name: Generate SBOM with Syft
+      uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
+      with:
+        image: ${{ inputs.image }}
+        format: ${{ inputs.format }}
+        artifact-name: ${{ inputs.artifact }}
+        output-file: ${{ inputs.output }}
+
+    # - name: Upload SBOM to Dependency-Track
+    #   uses: DependencyTrack/gh-upload-sbom@48feab3080ff9e8f51f4d21861d9fc914eb744f5 # v3.1.0
+    #   with:
+    #     serverhostname: ${{ inputs.dependency-track-host-url }}
+    #     apikey: ${{ inputs.dependency-track-api-key }}
+    #     projectname: ${{ inputs.project-name }}
+    #     projectversion: ${{ inputs.project-version }}
+    #     bomfilename: ${{ inputs.output }}
+    #     autocreate: true

@@ -71,7 +71,6 @@ jobs:
         uses: irishlab-io/pin-docker-digest/.github/actions/sca@main
 
   docker_build:
-    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:
       - code_build
     name: Container Build
@@ -143,7 +142,6 @@ jobs:
         shell: bash
 
   docker_smoke:
-    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:
       - docker_build
     name: Container Smoke Test
@@ -158,7 +156,6 @@ jobs:
         shell: bash
 
   docker_scan:
-    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:
       - docker_build
     name: Container Vulnerability Scan
@@ -175,12 +172,30 @@ jobs:
           severity: high
         continue-on-error: true
 
+  sbom:
+    needs:
+      - docker_build
+    name: Container SBOM Generation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Call Syft Action
+        id: syft
+        uses: irishlab-io/pin-docker-digest/.github/actions/syft@main
+        with:
+          artifact: ${{ github.run_id }}-sbom.json
+          format: cyclonedx-json
+          image: ghcr.io/${{ github.repository }}:${{ needs.docker_build.outputs.image-tag }}
+          output: ${{ github.workspace }}/${{ github.run_id }}-sbom.json
+        continue-on-error: true
+
   gating:
-    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:
       - code_scan
       - docker_scan
       - docker_smoke
+      - sbom
       - secret
     name: Gating
     runs-on: ubuntu-24.04

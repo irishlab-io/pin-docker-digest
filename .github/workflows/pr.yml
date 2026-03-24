@@ -59,11 +59,11 @@ jobs:
 
       - name: Call SAST Scan
         id: sast
-        uses: irishlab-io/.github/.github/actions/sast@main
+        uses: irishlab-io/pin-docker-digest/.github/actions/sast@main
 
       - name: Call SCA Scan
         id: sca
-        uses: irishlab-io/.github/.github/actions/sca@main
+        uses: irishlab-io/pin-docker-digest/.github/actions/sca@main
 
   docker_build:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}

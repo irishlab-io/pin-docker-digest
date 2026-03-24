@@ -22,7 +22,7 @@ jobs:
 
   pre-commit:
     name: Call Prek
-    uses: irishlab-io/.github@421e8f92540a467da9514ee86329746737b654c9 # main
+    uses: irishlab-io/.github/.github/workflows/reusable-prek.yml@main
     with:
       skips: "actionlint,ggshield,pin-github-action,pytest"
 
@@ -31,7 +31,7 @@ jobs:
     needs:
       - pre-commit
     name: Call Git Guardian
-    uses: irishlab-io/.github@421e8f92540a467da9514ee86329746737b654c9 # main
+    uses: irishlab-io/.github/.github/workflows/reusable-gitguardian.yml@main
     secrets:
       GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
 
@@ -40,7 +40,7 @@ jobs:
     needs:
       - pre-commit
     name: Call Python UV | Build & Unit Tests
-    uses: irishlab-io/.github@421e8f92540a467da9514ee86329746737b654c9 # main
+    uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@main
 
     with:
       os-matrix: '["ubuntu-24.04"]'

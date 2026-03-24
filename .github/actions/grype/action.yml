@@ -25,7 +25,7 @@ runs:
       shell: bash
 
     - name: Scan image
-      uses: anchore/scan-action@v7.4.0
+      uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
       with:
         image: ${{ inputs.image }}
         fail-build: ${{ inputs.fail-build }}

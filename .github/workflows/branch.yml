@@ -28,7 +28,7 @@ jobs:
   code_build:
     needs:
       - secret
-    name: Call Python | UV & Unit Tests
+    name: Call Python UV | Build & Unit Tests
     uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@main
 
     with:

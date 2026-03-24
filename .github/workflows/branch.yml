@@ -54,6 +54,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up QEMU
         id: qemu
@@ -110,8 +112,10 @@ jobs:
         id: image-tag
         run: |
           # shellcheck disable=SC2086
-          echo "image-tag=${{ steps.docker_meta.outputs.version }}" >> $GITHUB_OUTPUT
+          echo "image-tag=${STEPS_DOCKER_META_OUTPUTS_VERSION}" >> $GITHUB_OUTPUT
         shell: bash
+        env:
+          STEPS_DOCKER_META_OUTPUTS_VERSION: ${{ steps.docker_meta.outputs.version }}
 
   docker_scan:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}

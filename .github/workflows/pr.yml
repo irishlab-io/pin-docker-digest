@@ -172,11 +172,29 @@ jobs:
           severity: high
         continue-on-error: true
 
+  gating:
+    needs:
+      - code_scan
+      - docker_scan
+      - docker_smoke
+      - secret
+    name: Gating
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Run Gating Check
+        id: gating
+        run: |
+          echo Run Gating Check
+        shell: bash
+
   sbom:
     needs:
       - docker_build
       - docker_scan
-    name: Container SBOM Generation
+      - gating
+    name: SBOM Generation & Upload
     runs-on: ubuntu-24.04
     timeout-minutes: 10
 
@@ -190,21 +208,3 @@ jobs:
           image: ghcr.io/${{ github.repository }}:${{ needs.docker_build.outputs.image-tag }}
           output: ${{ github.workspace }}/${{ github.run_id }}-sbom.json
         continue-on-error: true
-
-  gating:
-    needs:
-      - code_scan
-      - docker_scan
-      - docker_smoke
-      - sbom
-      - secret
-    name: Gating
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-
-    steps:
-      - name: Run Gating Check
-        id: gating
-        run: |
-          echo Run Gating Check
-        shell: bash

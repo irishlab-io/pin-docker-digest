@@ -107,3 +107,20 @@ jobs:
           # shellcheck disable=SC2086
           echo "image-tag=${{ steps.docker_meta.outputs.version }}" >> $GITHUB_OUTPUT
         shell: bash
+
+  docker_scan:
+    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
+    needs:
+      - docker_build
+    name: Container Vulnerability Scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Call Grype Action
+        id: grype
+        uses: irishlab-io/pin-docker-digest/.github/actions/grype@main
+        with:
+          image: ghcr.io/${{ github.repository }}:${{ needs.docker_build.outputs.image-tag }}
+          fail: true
+          severity: medium

@@ -163,12 +163,13 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Run Container Scan
-        id: container
-        run: |
-          echo Run Container Scan
-          echo "::warning::Must implement a container scanning mechanism."
-        shell: bash
+      - name: Call Grype Action
+        id: grype
+        uses: irishlab-io/pin-docker-digest/.github/actions/grype@main
+        with:
+          image: ghcr.io/${{ github.repository }}:${{ needs.docker_build.outputs.image-tag }}
+          fail: true
+          severity: critical
 
   gating:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}

@@ -181,6 +181,7 @@ jobs:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:
       - docker_build
+      - docker_scan
     name: Container SBOM Generation
     runs-on: ubuntu-24.04
     timeout-minutes: 10

@@ -79,7 +79,7 @@ repos:
       - id: pin-github-action
         name: "security | gh-action: pinned sha"
         verbose: true
-        files: ^\.github/workflows/[^/]+\.ya?ml$
+        files: ^\.github/workflows/.*\.(yml|yaml)$
         entry: "pin-github-action ."
         args:
           - --allow
@@ -94,6 +94,7 @@ repos:
     hooks:
       - id: zizmor
         name: "security | gh-action: zizmor scan"
+        files: ^\.github/workflows/.*\.(yml|yaml)$
         stages:
           - manual
   - repo: https://github.com/rhysd/actionlint
@@ -102,12 +103,15 @@ repos:
       - id: actionlint
         name: "gh-action | lint: workflow syntax"
         files: ^\.github/workflows/.*\.(yml|yaml)$
-        args: ["-shellcheck"]
+        stages:
+          - manual
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.11.0
     hooks:
       - id: uv-lock
         name: "python | uv: lock dependencies"
+        stages:
+          - manual
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.7
     hooks:

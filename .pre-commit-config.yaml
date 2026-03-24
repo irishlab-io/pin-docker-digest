@@ -89,6 +89,13 @@ repos:
           - pin-github-action@3.4.0
         stages:
           - manual
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.11
+    hooks:
+      - id: actionlint
+        name: "gh-action | lint: workflow syntax"
+        files: ^\.github/workflows/.*\.(yml|yaml)$
+        args: ["-shellcheck"]
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.11.0
     hooks:

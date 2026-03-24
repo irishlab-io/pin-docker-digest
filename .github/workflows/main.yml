@@ -1,5 +1,6 @@
 ---
 name: CI - Main
+run-name: Continuous Integration on ${{ github.head_ref || github.ref_name }} by ${{ github.actor }}
 
 on: # yamllint disable-line rule:truthy
   push:
@@ -9,57 +10,37 @@ on: # yamllint disable-line rule:truthy
       - 'README.md'
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
 
   pre-commit:
-    name: Pre-Commit Checks
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-
-      - name: Run Pre-Commit (prek) Checks
-        uses: j178/prek-action@91fd7d7cf70ae1dee9f4f44e7dfa5d1073fe6623 # v1.0.11
-
-        env:
-          SKIP: "pytest,pin-github-action"
+    name: Call Prek
+    uses: irishlab-io/.github/.github/workflows/reusable-prek.yml@main
+    with:
+      skips: "actionlint,ggshield,pin-github-action,pytest"
 
   secret:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:
       - pre-commit
-    name: Placeholder - Secret Scanning
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-
-      - name: Run Secret Scanning
-        run: echo Secret Scanning
-        shell: bash
+    name: Call Git Guardian
+    uses: irishlab-io/.github/.github/workflows/reusable-gitguardian.yml@main
+    secrets:
+      GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
 
   unit-test:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:
       - secret
     name: Call Python | UV & Unit Tests
-    uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@cc61910f6ccf9d0f58c5c1006f42d64986eeba82 # main
+    uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@main
 
     with:
       pytest-enable: true
-      python_version: "3.14"
-      ruff-enable: false
-      ruff_version: "0.12.10"
-      uv_version: "0.9.0"
+      python-version: "3.14"
       working_directory: .
-
 
   release:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}

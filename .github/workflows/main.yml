@@ -30,7 +30,7 @@ jobs:
     secrets:
       GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
 
-  unit-test:
+  code_build:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:
       - secret
@@ -47,7 +47,6 @@ jobs:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:
       - pre-commit
-      - sdlc_scan
     name: Vulnerabilities Scan
     runs-on: ${{ matrix.os }}
     strategy:
@@ -192,7 +191,8 @@ jobs:
   release:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:
-      - unit-test
+      - code_build
+      - gating
 
     name: Version - Release bump
     runs-on: ubuntu-24.04

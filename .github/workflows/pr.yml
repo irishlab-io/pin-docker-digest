@@ -178,6 +178,12 @@ jobs:
           severity: high
         continue-on-error: true
 
+      - name: Check status of potentially failing step and issue warning
+        if: steps.grype.outcome == 'failure'
+        run: |
+          echo "::error::The previous step detected potential failure in the code. Please review the report above."
+        shell: bash
+
   gating:
     needs:
       - code_scan

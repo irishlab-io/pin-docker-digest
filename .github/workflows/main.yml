@@ -183,6 +183,12 @@ jobs:
           severity: critical
         continue-on-error: true
 
+      - name: Check status of potentially failing step and issue warning
+        if: steps.grype.outcome == 'failure'
+        run: |
+          echo "::error::The previous step detected potential failure in the code. Please review the report above."
+        shell: bash
+
   gating:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
     needs:

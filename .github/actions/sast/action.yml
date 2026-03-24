@@ -1,0 +1,13 @@
+---
+name: SAST Scan
+description: Composite action for Static Application Security Testing (SAST) scan
+author: irishlab-io
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run SAST Scan
+      run: |
+        echo Run SAST
+        echo "::warning::Must implement a static application security testing mechanism."
+      shell: bash

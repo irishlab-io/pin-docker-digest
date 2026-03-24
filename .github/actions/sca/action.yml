@@ -1,0 +1,13 @@
+---
+name: SCA Scan
+description: Composite action for Software Composition Analysis (SCA) scan
+author: irishlab-io
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run SCA Scan
+      run: |
+        echo Run SCA
+        echo "::warning::Must implement a dependencies scanning mechanism."
+      shell: bash

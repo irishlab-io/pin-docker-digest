@@ -38,9 +38,156 @@ jobs:
     uses: irishlab-io/.github/.github/workflows/reusable-python-uv.yml@main
 
     with:
+      os-matrix: '["ubuntu-24.04"]'
+      python-version-matrix: '["3.10"]'
       pytest-enable: true
-      python-version: "3.14"
       working_directory: .
+
+  code_scan:
+    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
+    needs:
+      - pre-commit
+      - sdlc_scan
+    name: Vulnerabilities Scan
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-22.04-arm, ubuntu-24.04, ubuntu-24.04-arm]
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Call SAST Scan
+        id: sast
+        uses: irishlab-io/.github/.github/actions/sast@main
+
+      - name: Call SCA Scan
+        id: sca
+        uses: irishlab-io/.github/.github/actions/sca@main
+
+  docker_build:
+    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
+    needs:
+      - code_build
+    name: Container Build
+    runs-on: ubuntu-24.04
+    outputs:
+      image-tag: ${{ steps.image-tag.outputs.image-tag }}
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Login to GHCR
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: docker_meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=auto
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}},priority=100
+            type=ref,event=branch,priority=100
+            type=raw,value=gha-${{ github.run_id }},enable=${{github.event_name == 'pull_request'}},priority=200
+            type=raw,value=nightly-${{ github.run_id }},enable=${{github.event_name == 'schedule'}},priority=200
+            type=ref,event=pr,priority=200
+            type=ref,event=tag,priority=200
+            type=sha,value={{sha}},enable={{is_default_branch}},priority=300
+
+      - name: Docker Build
+        id: build_image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          platforms: |
+            linux/amd64
+          context: .
+          file: ./Dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: false # This is a fake workflow for demo purpose
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+            GIT_COMMIT=${{ github.sha }}
+            REPO_URL=${{ github.server_url }}/${{ github.repository }}
+
+      - name: Find the primary image tag we just pushed, and output it
+        id: image-tag
+        run: |
+          # shellcheck disable=SC2086
+          echo "image-tag=${{ steps.docker_meta.outputs.version }}" >> $GITHUB_OUTPUT
+        shell: bash
+
+  docker_smoke:
+    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
+    needs:
+      - docker_build
+    name: Container Smoke Test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Run Smoke Test
+        id: smoke
+        run: |
+          echo Run Smoke Test
+        shell: bash
+
+  docker_scan:
+    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
+    needs:
+      - docker_build
+    name: Container Vulnerability Scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Run Container Scan
+        id: container
+        run: |
+          echo Run Container Scan
+          echo "::warning::Must implement a container scanning mechanism."
+        shell: bash
+
+  gating:
+    if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
+    needs:
+      - code_scan
+      - docker_scan
+      - docker_smoke
+      - secret
+    name: Gating
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Run Gating Check
+        id: gating
+        run: |
+          echo Run Gating Check
+        shell: bash
 
   release:
     if: ${{ ! startsWith(github.event.head_commit.message, 'bump:') }}
